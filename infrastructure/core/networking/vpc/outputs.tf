@@ -22,4 +22,9 @@ output "private_subnet_ids" {
   }
 }
 
-
+output "private_subnet_cidrs" {
+  value = {
+    tools = module.tools.subnet_cidrs["private"]
+    services = module.services.subnet_cidrs["private"]
+  }
+}

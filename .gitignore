@@ -3,7 +3,7 @@
 terraform.tfstate
 *.tfstate*
 terraform.tfvars
-**/.modules
+**/.modules-progress
 
 
 # Byte-compiled / optimized / DLL files
