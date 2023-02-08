@@ -11,34 +11,23 @@ locals {
 
 
 ################################################################################
-#  VPC
+#  EKS Node
 ################################################################################
-module "services" {
-  source                     = "../../../.modules/vpc"
-  vpc_name                   = format("%s-services", var.project)
-  environment                = local.environment
-  vpc_cidr                   = var.vpc_cidr["services"]
-  availability_zone_count    = 2
-  subnet_mask_slash_notation = 24
-  application_ports          = [8080]
-  enable_flow_logs           = false
-  enabled_vpc_endpoints      = []
-
-  providers = {
-    aws.account = aws.account
+module "service_a" {
+  source           = "../../.modules/eks-node"
+  project          = var.project
+  environment      = local.environment
+  cluster_name     = data.terraform_remote_state.cluster.outputs.cluster_name
+  node_name        = var.service_name
+  namespace        = "liatrio"
+  subnet_ids       = data.terraform_remote_state.vpc.outputs.private_subnet_ids["tools"]
+  cpu_limit        = 0.5
+  memory_limit     = 50
+  container_image  = format("%s:%s", data.terraform_remote_state.ecr.outputs.repository_url[var.service_name], var.container_image_tag)
+  healthcheck_path = "/health"
+  labels = {
+    service = var.service_name
   }
-}
-
-module "tools" {
-  source                     = "../../../.modules/vpc"
-  vpc_name                   = format("%s-tools", var.project)
-  environment                = local.environment
-  vpc_cidr                   = var.vpc_cidr["tools"]
-  availability_zone_count    = 2
-  subnet_mask_slash_notation = 24
-  application_ports          = []
-  enable_flow_logs           = false
-  enabled_vpc_endpoints      = []
 
   providers = {
     aws.account = aws.account
