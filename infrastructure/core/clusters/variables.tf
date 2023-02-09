@@ -15,6 +15,6 @@ variable "service_name" {
 
 variable "namespaces" {
   description = "List of Kubernetes namespaces to provision to the cluster"
-  type = list 
-  default = ["liatrio"]
+  type        = list(any)
+  default     = ["liatrio"]
 }

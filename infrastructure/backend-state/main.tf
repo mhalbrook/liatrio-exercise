@@ -23,10 +23,10 @@ locals {
 #  Terraform Backend KMS Key
 ##########################################################
 module "backend_kms" {
-  source                   = "../.modules/kms"
-  environment              = local.environment
-  service                  = "terraform-backend"
-  suffix                   = "terraform-backend"
+  source      = "../.modules/kms"
+  environment = local.environment
+  service     = "terraform-backend"
+  suffix      = "terraform-backend"
 
   providers = {
     aws.account   = aws.account
@@ -40,13 +40,14 @@ module "backend_kms" {
 #  S3 Access Terraform Backend
 ##########################################################
 module "backend_s3" {
-  source                   = "../.modules/s3"
-  project                  = var.project
-  environment              = local.environment
-  bucket_name              = "terraform-state-backend"
-  kms_key_arns             = [module.backend_kms.key_arn[data.aws_region.region.name]]
-  data_classification      = "internal"
-  enable_access_logs       = false
+  source                  = "../.modules/s3"
+  project                 = var.project
+  environment             = local.environment
+  bucket_name             = "terraform-state-backend"
+  kms_key_arns            = [module.backend_kms.key_arn[data.aws_region.region.name]]
+  data_classification     = "internal"
+  enable_access_logs      = false
+  delete_unemptied_bucket = true
 
   providers = {
     aws.account   = aws.account

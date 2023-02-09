@@ -18,3 +18,9 @@ variable "container_image_tag" {
   type        = string
   default     = "v1.0"
 }
+
+variable "app_port" {
+  description = "Port on which the service listens"
+  type        = number
+  default     = 8080
+}

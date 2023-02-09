@@ -5,7 +5,7 @@
 # Global Locals
 ##########################################################
 locals {
-  account_name    = var.project == null ? data.aws_iam_account_alias.account_alias.account_alias : var.project               # allow 'project' variable to overwrite account_name, otherwise set dynamically
+  account_name    = var.project == null ? data.aws_iam_account_alias.account_alias.account_alias : var.project                                               # allow 'project' variable to overwrite account_name, otherwise set dynamically
   full_table_name = join("-", distinct(split("-", format("%s-%s-%s-%s", data.aws_region.region.name, local.account_name, var.environment, var.table_name)))) # Set the table name in accordance with standard naming schema
 }
 

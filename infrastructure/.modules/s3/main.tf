@@ -6,7 +6,7 @@
 #############################################################
 locals {
   account_name     = var.project == null ? data.aws_iam_account_alias.account_alias.account_alias : var.project                                                 # allow 'project' variable to overwrite account_name, otherwise set dynamically
-  bucket_name      = var.is_logging_bucket == false ? var.bucket_name : "logs"                                                                                  # if the bucket is a logging bucket, overwrite the bucket name to 'logs'
+  bucket_name      = var.is_logging_bucket == false ? format("%s-%s", var.bucket_name, random_string.random.result) : "logs"                                    # if the bucket is a logging bucket, overwrite the bucket name to 'logs'
   full_bucket_name = var.suppress_region == false ? format("%s-%s-%s", data.aws_region.primary.name, local.account_name, local.bucket_name) : local.bucket_name # set bucket name to align to standard schema
 }
 
@@ -18,7 +18,7 @@ locals {
   cors               = var.allowed_headers != null || var.allowed_methods != null || var.allowed_origins != null || var.expose_headers != null ? true : false # if any CORS variable is not null, set CORS to 'true'
   enable_access_logs = var.is_logging_bucket == true || var.enable_access_logs == false ? false : true
   sync_buckets       = var.replication_region_count > 0 ? var.sync_buckets : false # ensure sync is off when replication is off
-  alb_service_accounts = merge( # use merge to ensure the local does not attempt to duplicate keys (i.e. same region is provided twice from root)
+  alb_service_accounts = merge(                                                    # use merge to ensure the local does not attempt to duplicate keys (i.e. same region is provided twice from root)
     { (data.aws_elb_service_account.primary.region) = data.aws_elb_service_account.primary.arn },
     { (data.aws_elb_service_account.secondary.region) = data.aws_elb_service_account.secondary.arn },
     { (data.aws_elb_service_account.tertiary.region) = data.aws_elb_service_account.tertiary.arn }
@@ -70,6 +70,14 @@ locals {
   }
 }
 
+
+################################################################################
+# Random String - Ensure Bucket Names are Unique for Repeat Build & Destroy
+################################################################################
+resource "random_string" "random" {
+  length  = 4
+  special = false
+}
 
 ################################################################################
 # Bucket
@@ -584,7 +592,7 @@ resource "aws_s3_bucket_replication_configuration" "tertiary" {
               minutes = 15
             }
           }
-        } 
+        }
 
         dynamic "metrics" {
           for_each = var.enable_rtc ? ["rtc"] : []
@@ -594,7 +602,7 @@ resource "aws_s3_bucket_replication_configuration" "tertiary" {
               minutes = 15
             }
           }
-        }          
+        }
       }
     }
   }

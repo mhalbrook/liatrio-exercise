@@ -5,8 +5,8 @@
 # Global Locals
 #############################################################
 locals {
-  account_name      = var.project == null ? data.aws_iam_account_alias.account_alias.account_alias : var.project # allow 'project' variable to overwrite account_name, otherwise set dynamically
-  full_cluster_name = format("%s-%s-%s-%s", data.aws_region.region.name, var.environment, local.account_name, var.cluster_name)    # set name to align to standard schema
+  account_name      = var.project == null ? data.aws_iam_account_alias.account_alias.account_alias : var.project                # allow 'project' variable to overwrite account_name, otherwise set dynamically
+  full_cluster_name = format("%s-%s-%s-%s", data.aws_region.region.name, var.environment, local.account_name, var.cluster_name) # set name to align to standard schema
 }
 
 #############################################################
@@ -30,7 +30,10 @@ locals {
 # IAM Locals
 #############################################################
 locals {
-  aws_managed_policies = toset(["AmazonEKSClusterPolicy", "AmazonEKSVPCResourceController"])
+  amazon_managed_policies = {
+    cluster = toset(["AmazonEKSClusterPolicy", "AmazonEKSVPCResourceController"])
+    pods    = toset(["AmazonEKSFargatePodExecutionRolePolicy"])
+  }
 }
 
 
@@ -42,6 +45,7 @@ resource "aws_eks_cluster" "cluster" {
   name                      = local.full_cluster_name
   role_arn                  = aws_iam_role.cluster.arn
   enabled_cluster_log_types = var.log_types
+  depends_on                = [aws_iam_role_policy_attachment.amazon_managed_policies_cluster]
   tags                      = merge(var.tags, local.default_tags)
 
   vpc_config {
@@ -52,10 +56,10 @@ resource "aws_eks_cluster" "cluster" {
     public_access_cidrs     = var.cluster_api_access_cidrs
   }
 
-  kubernetes_network_config {
+  /* kubernetes_network_config {
     service_ipv4_cidr = var.cluster_node_vpc_cidr
     ip_family         = "ipv4"
-  }
+  } */
 
   dynamic "encryption_config" {
     for_each = var.kms_key_arn != null ? toset(["key"]) : []
@@ -66,10 +70,37 @@ resource "aws_eks_cluster" "cluster" {
       }
     }
   }
+}
 
-  depends_on = [
-    aws_iam_role_policy_attachment.amazon_managed_policies
-  ]
+
+################################################################################
+# CoreDNS
+################################################################################
+resource "aws_eks_addon" "coredns" {
+  provider             = aws.account
+  cluster_name         = aws_eks_cluster.cluster.name
+  addon_name           = "coredns"
+  addon_version        = "v1.8.7-eksbuild.3"
+  configuration_values = jsonencode({ computeType = "Fargate" })
+  resolve_conflicts    = "OVERWRITE"
+  tags                 = merge(var.tags, local.default_tags)
+  depends_on           = [aws_eks_fargate_profile.coredns]
+}
+
+resource "aws_eks_fargate_profile" "coredns" {
+  provider               = aws.account
+  cluster_name           = aws_eks_cluster.cluster.name
+  fargate_profile_name   = "CoreDNS"
+  pod_execution_role_arn = aws_iam_role.pods.arn
+  subnet_ids             = var.subnet_ids
+  tags                   = merge(var.tags, local.default_tags)
+
+  selector {
+    namespace = "kube-system"
+    labels = {
+      "k8s-app" = "kube-dns"
+    }
+  }
 }
 
 ################################################################################
@@ -115,9 +146,9 @@ data "aws_iam_policy_document" "assume_eks" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "amazon_managed_policies" {
-  provider = aws.account
-  for_each   = local.aws_managed_policies
+resource "aws_iam_role_policy_attachment" "amazon_managed_policies_cluster" {
+  provider   = aws.account
+  for_each   = local.amazon_managed_policies["cluster"]
   policy_arn = format("arn:aws:iam::aws:policy/%s", each.value)
   role       = aws_iam_role.cluster.name
 }
@@ -134,19 +165,36 @@ resource "aws_cloudwatch_log_group" "cluster" {
 
 
 ################################################################################
-# Kube Config
+# Pod Execution Role
 ################################################################################
-resource "null_resource" "config" {
-  provisioner "local-exec" {
-    command = "aws eks update-kubeconfig --region $region --name $cluster_name --profile $profile"
-    environment = {
-      cluster_name    = aws_eks_cluster.cluster.name
-      region          = data.aws_region.region.name
-      profile         = "halbromr"
+resource "aws_iam_role" "pods" {
+  provider           = aws.account
+  name               = format("%s-pod-execution", local.full_cluster_name)
+  assume_role_policy = data.aws_iam_policy_document.assume_eks_pods.json
+  tags               = merge(var.tags, local.default_tags)
+}
+
+data "aws_iam_policy_document" "assume_eks_pods" {
+  provider = aws.account
+  statement {
+    sid     = "AssumeEKS"
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["eks-fargate-pods.amazonaws.com"]
+    }
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = [format("arn:aws:eks:%s:%s:fargateprofile/%s/*", data.aws_region.region.name, data.aws_caller_identity.account.account_id, local.full_cluster_name)]
     }
   }
-  
-  triggers = {
-    cluster_arn = aws_eks_cluster.cluster.arn
-  }
+}
+
+resource "aws_iam_role_policy_attachment" "amazon_managed_policies_pods" {
+  provider   = aws.account
+  for_each   = local.amazon_managed_policies["pods"]
+  policy_arn = format("arn:aws:iam::aws:policy/%s", each.value)
+  role       = aws_iam_role.pods.name
 }

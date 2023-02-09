@@ -21,6 +21,10 @@ output "cluster_certificate_authority" {
   value = aws_eks_cluster.cluster.certificate_authority
 }
 
+output "cluster_token" {
+  value     = data.aws_eks_cluster_auth.token.token
+  sensitive = true
+}
 
 ################################################################################
 # IAM Role Outputs
@@ -69,3 +73,21 @@ output "security_group_id" {
   value = aws_security_group.cluster.id
 }
 
+################################################################################
+# Pod Execution IAM Role Outputs
+################################################################################
+output "pod_exec_role_name" {
+  value = aws_iam_role.pods.name
+}
+
+output "pod_exec_role_arn" {
+  value = aws_iam_role.pods.arn
+}
+
+output "pod_exec_role_id" {
+  value = aws_iam_role.pods.id
+}
+
+output "pod_exec_role_unique_id" {
+  value = aws_iam_role.pods.unique_id
+}

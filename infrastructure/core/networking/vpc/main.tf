@@ -29,7 +29,7 @@ module "services" {
   }
 }
 
-module "tools" {
+/* module "tools" {
   source                     = "../../../.modules/vpc"
   vpc_name                   = format("%s-tools", var.project)
   environment                = local.environment
@@ -43,4 +43,4 @@ module "tools" {
   providers = {
     aws.account = aws.account
   }
-}
+} */

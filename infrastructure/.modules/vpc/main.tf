@@ -300,10 +300,11 @@ resource "aws_subnet" "public" {
     var.tags,
     var.default_tags,
     {
-      Name              = format("%s-public-subnet", replace(local.full_vpc_name, data.aws_region.region.name, each.value))
-      environment       = var.environment
-      layer             = "public"
-      availability_zone = each.value
+      Name                     = format("%s-public-subnet", replace(local.full_vpc_name, data.aws_region.region.name, each.value))
+      environment              = var.environment
+      layer                    = "public"
+      availability_zone        = each.value
+      "kubernetes.io/role/elb" = 1
     }
   )
 }
@@ -322,10 +323,11 @@ resource "aws_subnet" "private" {
     var.tags,
     var.default_tags,
     {
-      Name              = format("%s-private-subnet", replace(local.full_vpc_name, data.aws_region.region.name, each.value))
-      environment       = var.environment
-      layer             = "private"
-      availability_zone = each.value
+      Name                              = format("%s-private-subnet", replace(local.full_vpc_name, data.aws_region.region.name, each.value))
+      environment                       = var.environment
+      layer                             = "private"
+      availability_zone                 = each.value
+      "kubernetes.io/role/internal-elb" = 1
     }
   )
 }

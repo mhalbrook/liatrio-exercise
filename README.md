@@ -4,7 +4,7 @@
 1. backend-state
 2. vpc
 3. ecr
-4. docker build
+4. docker build -t ECR .
 5. docker tag/push
 6. cluster-a
 7. service-a

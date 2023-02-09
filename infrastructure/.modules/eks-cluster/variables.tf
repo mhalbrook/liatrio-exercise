@@ -40,9 +40,9 @@ variable "cluster_api_access_cidrs" {
 }
 
 variable "kms_key_arn" {
-    description = "ARN of the KMS Key used to encrypt the Cluster"
-    type = string 
-    default = null
+  description = "ARN of the KMS Key used to encrypt the Cluster"
+  type        = string
+  default     = null
 }
 
 ################################################################################
@@ -59,8 +59,9 @@ variable "subnet_ids" {
 }
 
 variable "cluster_node_vpc_cidr" {
-    description = "CIDR of the VPC in which the Cluster will provision Nodes"
-    type = string
+  description = "CIDR of the VPC in which the Cluster will provision Nodes"
+  type        = string
+  default     = null
 }
 
 ################################################################################
@@ -77,3 +78,4 @@ variable "log_retention_period" {
   type        = number
   default     = 7
 }
+

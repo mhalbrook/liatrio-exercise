@@ -15,11 +15,11 @@ data "aws_region" "region" {
 
 
 ################################################################################
-# VPC Inputs
+# Network Inputs
 ################################################################################
 data "aws_vpc" "vpc" {
-  provider = aws.account 
-  id = var.vpc_id
+  provider = aws.account
+  id       = var.vpc_id
 }
 
 data "aws_subnet" "subnet" {
@@ -28,3 +28,10 @@ data "aws_subnet" "subnet" {
   id       = each.value
 }
 
+################################################################################
+# EKS Inputs
+################################################################################
+data "aws_eks_cluster_auth" "token" {
+  provider = aws.account
+  name     = aws_eks_cluster.cluster.name
+}

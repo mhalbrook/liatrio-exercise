@@ -23,7 +23,7 @@ data "terraform_remote_state" "cluster" {
   config = {
     bucket  = "us-east-1-interview-mitch-halbrook-terraform-state-backend"
     region  = "us-east-1"
-    key     = "core/clusters/cluster-a/terraform.tfstate"
+    key     = "core/clusters/terraform.tfstate"
     profile = "halbromr"
   }
 }

@@ -10,8 +10,8 @@ variable "project" {
 variable "vpc_cidr" {
   description = "CIDR adress of the VPC"
   type        = map(string)
-  default     = {
+  default = {
     services = "10.1.0.0/16"
-    tools = "10.10.0.0/16"
+    #tools    = "10.10.0.0/16"
   }
 }

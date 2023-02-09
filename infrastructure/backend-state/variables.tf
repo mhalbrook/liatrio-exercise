@@ -9,6 +9,6 @@ variable "project" {
 
 variable "region" {
   description = "The AWS Region in which to provision the backend state resources"
-  type = string 
-  default = "us-east-1"
+  type        = string
+  default     = "us-east-1"
 }

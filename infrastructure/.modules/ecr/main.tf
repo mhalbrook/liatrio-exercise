@@ -5,9 +5,9 @@
 # Global Locals
 #############################################################
 locals {
-  project        = var.project != null ? var.project : data.aws_iam_account_alias.account.account_alias                                                                                                                              # if a project is not provided, set the project to the IAM Alias of the AWS Account in which resources are provisioned
+  project        = var.project != null ? var.project : data.aws_iam_account_alias.account.account_alias                                                                                                                                                  # if a project is not provided, set the project to the IAM Alias of the AWS Account in which resources are provisioned
   full_repo_name = var.pull_through_cache_image_namespace != null ? format("pull-through-cache/%s/%s", trimsuffix(var.pull_through_cache_image_namespace, "/"), var.service_name) : format("%s-%s-%s", local.project, var.environment, var.service_name) # if the ECR is supporting Pull Through Cache, set the name to the namespace of Public Image being pulled, otherwise set the naming convention to align with standard schemas
-  immutability   = var.enable_tag_immutability == false ? "MUTABLE" : "IMMUTABLE"                                                                                                                                                    # Set the appropraite values for tag immutability
+  immutability   = var.enable_tag_immutability == false ? "MUTABLE" : "IMMUTABLE"                                                                                                                                                                        # Set the appropraite values for tag immutability
 }
 
 #############################################################
@@ -54,6 +54,7 @@ resource "aws_ecr_repository" "ecr" {
   provider             = aws.account
   name                 = local.full_repo_name
   image_tag_mutability = local.immutability
+  force_delete         = true
   tags                 = merge(var.tags, local.default_tags)
 
   encryption_configuration {

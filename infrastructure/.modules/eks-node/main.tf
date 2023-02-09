@@ -34,7 +34,7 @@ resource "aws_eks_fargate_profile" "node" {
   provider               = aws.account
   cluster_name           = var.cluster_name
   fargate_profile_name   = local.full_node_name
-  pod_execution_role_arn = aws_iam_role.node.arn
+  pod_execution_role_arn = var.pod_execution_role_arn
   subnet_ids             = var.subnet_ids
   tags                   = merge(var.tags, local.default_tags)
 
@@ -49,7 +49,6 @@ resource "aws_eks_fargate_profile" "node" {
 ################################################################################
 resource "kubernetes_service" "service" {
   provider = kubernetes
-  count    = var.is_dns_resolver ? 0 : 1
   metadata {
     name      = var.node_name
     namespace = var.namespace
@@ -68,98 +67,102 @@ resource "kubernetes_service" "service" {
 
 resource "kubernetes_deployment" "deployment" {
   provider = kubernetes
-  count    = var.is_dns_resolver ? 0 : 1
   metadata {
-    name = var.node_name 
-    labels = var.labels
+    name      = var.node_name
+    labels    = var.labels
     namespace = var.namespace
   }
   spec {
-    replicas = var.desired_count 
+    replicas = var.desired_count
     selector {
-        match_labels = var.labels
+      match_labels = var.labels
     }
     template {
-        metadata {
-            labels = var.labels
-        }
-        spec {
-            container  {
-                image = var.container_image 
-                name = var.node_name 
-                resources {
-                    limits = {
-                        cpu = format("%sm", var.cpu_limit) 
-                        memory = format("%sMi", var.memory_limit)
-                    }
-                }
-                liveness_probe {
-                    initial_delay_seconds = 120 
-                    period_seconds = 5
-                    http_get {
-                        path = var.healthcheck_path 
-                        port = var.healthcheck_port > 0 ? var.healthcheck_port : var.port
-                    }
-                }
+      metadata {
+        labels = var.labels
+      }
+      spec {
+        container {
+          image = var.container_image
+          name  = var.node_name
+          dynamic "env" {
+            for_each = var.environment_variables
+            content {
+              name  = env.key
+              value = env.value
             }
+          }
+          resources {
+            limits = {
+              cpu    = format("%sm", var.cpu_limit)
+              memory = format("%sMi", var.memory_limit)
+            }
+          }
+          liveness_probe {
+            initial_delay_seconds = 120
+            period_seconds        = 5
+            http_get {
+              path = var.healthcheck_path
+              port = var.healthcheck_port > 0 ? var.healthcheck_port : var.port
+            }
+          }
         }
+      }
     }
     strategy {
-        type = "RollingUpdate"
-        rolling_update {
-            max_surge = "200%"
-            max_unavailable = "100%"
+      type = "RollingUpdate"
+      rolling_update {
+        max_surge       = "200%"
+        max_unavailable = "100%"
+      }
+    }
+  }
+  depends_on = [aws_eks_fargate_profile.node]
+}
+
+
+################################################################################
+# Kubernetes Ingress
+################################################################################
+resource "kubernetes_ingress_v1" "ingress" {
+  provider               = kubernetes
+  count                  = var.enable_ingress ? 1 : 0
+  wait_for_load_balancer = true
+  metadata {
+    name      = format("%s-ingress", var.node_name)
+    namespace = var.namespace
+    labels    = var.labels
+    annotations = {
+      "eks.amazonaws.com/role-arn"            = "arn:aws:iam::173070050511:role/AmazonEKSLoadBalancerControllerRole"
+      "alb.ingress.kubernetes.io/target-type" = "ip"
+      "alb.ingress.kubernetes.io/scheme"      = "internet-facing"
+      "alb.ingress.kubernetes.io/tags"        = "service_name=var.node_name"
+    }
+  }
+  spec {
+    ingress_class_name = "alb"
+    default_backend {
+      service {
+        name = kubernetes_service.service.metadata[0].name
+        port {
+          number = var.port
         }
+      }
     }
-  }
-
-}
-################################################################################
-# IAM Role
-################################################################################
-resource "aws_iam_role" "node" {
-  provider           = aws.account
-  name               = local.full_node_name
-  assume_role_policy = data.aws_iam_policy_document.assume_eks.json
-  tags               = merge(var.tags, local.default_tags)
-}
-
-data "aws_iam_policy_document" "assume_eks" {
-  provider = aws.account
-  statement {
-    sid     = "AssumeEKS"
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["eks-fargate-pods.amazonaws.com"]
+    rule {
+      http {
+        path {
+          path = "/"
+          backend {
+            service {
+              name = kubernetes_service.service.metadata[0].name
+              port {
+                number = var.port
+              }
+            }
+          }
+        }
+      }
     }
-    condition {
-      test     = "ArnLike"
-      variable = "aws:SourceArn"
-      values   = [format("arn:aws:eks:%s:%s:fargateprofile/%s/*", data.aws_region.region.name, data.aws_caller_identity.account.account_id, var.cluster_name)]
-    }
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "amazon_managed_policies" {
-  provider   = aws.account
-  for_each   = local.aws_managed_policies
-  policy_arn = format("arn:aws:iam::aws:policy/%s", each.value)
-  role       = aws_iam_role.node.name
-}
-
-
-################################################################################
-# DNS Override
-################################################################################
-resource "null_resource" "config" {
-  count = var.is_dns_resolver ? 1 : 0
-  provisioner "local-exec" {
-    command = "kubectl patch deployment coredns -n kube-system --type json -p='[{\"op\": \"remove\", \"path\": \"/spec/template/metadata/annotations/eks.amazonaws.com~1compute-type\"}]'"
-  }
-
-  triggers = {
-    cluster_arn = aws_eks_fargate_profile.node.arn
   }
 }

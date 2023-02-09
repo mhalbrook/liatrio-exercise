@@ -1,7 +1,10 @@
 ARG BASE_IMAGE_VERSION
-ARG PORT
 
-FROM --platform=linux/amd64 python:$BASE_IMAGE_VERSION
+FROM --platform=linux/amd64 python:3.10-slim
+
+ARG PORT
+ENV PORT=$PORT
+ENV FLASK_APP="handler.py"
 
 WORKDIR /app 
 
@@ -13,4 +16,4 @@ COPY . .
 
 RUN chmod +x entrypoint.sh
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ./entrypoint.sh ${PORT}
