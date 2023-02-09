@@ -56,11 +56,6 @@ resource "aws_eks_cluster" "cluster" {
     public_access_cidrs     = var.cluster_api_access_cidrs
   }
 
-  /* kubernetes_network_config {
-    service_ipv4_cidr = var.cluster_node_vpc_cidr
-    ip_family         = "ipv4"
-  } */
-
   dynamic "encryption_config" {
     for_each = var.kms_key_arn != null ? toset(["key"]) : []
     content {

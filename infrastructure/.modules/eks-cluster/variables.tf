@@ -58,11 +58,6 @@ variable "subnet_ids" {
   type        = list(any)
 }
 
-variable "cluster_node_vpc_cidr" {
-  description = "CIDR of the VPC in which the Cluster will provision Nodes"
-  type        = string
-  default     = null
-}
 
 ################################################################################
 # Logging Variables
