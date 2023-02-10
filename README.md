@@ -49,7 +49,15 @@ To deploy the application, navigate to the root of the repository from Terminal,
 
     pip3 install -r requirements.txt && python3 build.py --action apply
 
+Note that some resources may take > 20 minutes to provision. During this time, Python may not present any logs and may appear to 'hang'. This is normal and expected behavior.
+
 ## Cleanup
 To decommission the application, navigate to the root of the repository from Terminal, then run the following command: 
 
     python3 build.py --action destroy
+
+Note that the Terraform Backend Resources includes an S3 Bucket with a specific name. If the bucket is deleted, it may take up to 24 hours for the bucket name to become available again, preventing the service from being re-deployed. 
+
+To decommission the application, but save the Terraform Backend Resources, navigate to the root of the repository from Terminal, then run the following command: 
+
+    python3 build.py --action destroy --save-backend

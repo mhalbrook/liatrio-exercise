@@ -6,4 +6,4 @@ terraform {
     key            = "core/clusters/terraform.tfstate"
     dynamodb_table = "us-east-1-interview-mitch-halbrook-demo-terraform-state-lock"
   }
-} 
+}

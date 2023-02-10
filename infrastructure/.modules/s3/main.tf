@@ -6,7 +6,7 @@
 #############################################################
 locals {
   account_name     = var.project == null ? data.aws_iam_account_alias.account_alias.account_alias : var.project                                                 # allow 'project' variable to overwrite account_name, otherwise set dynamically
-  bucket_name      = var.is_logging_bucket == false ? var.bucket_name : "logs"                                    # if the bucket is a logging bucket, overwrite the bucket name to 'logs'
+  bucket_name      = var.is_logging_bucket == false ? var.bucket_name : "logs"                                                                                  # if the bucket is a logging bucket, overwrite the bucket name to 'logs'
   full_bucket_name = var.suppress_region == false ? format("%s-%s-%s", data.aws_region.primary.name, local.account_name, local.bucket_name) : local.bucket_name # set bucket name to align to standard schema
 }
 

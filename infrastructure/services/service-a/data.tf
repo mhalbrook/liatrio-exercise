@@ -28,6 +28,11 @@ data "terraform_remote_state" "cluster" {
   }
 }
 
+data "aws_eks_cluster_auth" "cluster" {
+  provider = aws.account
+  name     = data.terraform_remote_state.cluster.outputs.cluster_name
+}
+
 ################################################################################
 #  ECR Inputs
 ################################################################################

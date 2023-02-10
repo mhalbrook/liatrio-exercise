@@ -39,10 +39,12 @@ elb = boto3.client("elbv2", config=boto_cfg)
 tf = Terraform()
 docker = docker.APIClient(base_url='unix://var/run/docker.sock')
 
-# parse option
+# parse options
 parser.add_option("-a", "--action", dest="action", type="str", default="apply")
+parser.add_option("--save-backend", action="store_true", dest="save_backend", default=True)
 (options, args) = parser.parse_args()
 ACTION=options.action
+SAVE_BACKEND=options.save_backend
 
 # ############# functions #############################################
 
@@ -87,34 +89,8 @@ def manage_module(module, action, backend_config=None):
         else:
             retries-=1
             output = stderr 
-    return output
+    raise ValueError("Unable to {} module: {}".format(ACTION, output))
 
-    
-
-def create_backend_config(output):
-    config = "bucket = " + "\"" + output["bucket_config"]["value"]["bucket"] + "\"\n" + "region = " + "\"" + output["bucket_config"]["value"]["region"] + "\"\n" + "profile = " +  "\"" + PROFILE + "\"\n"
-    backend_config=REPO_DIR + "/backend.hcl"
-    print(backend_config)
-    backend_file = open(backend_config, "w")
-    backend_file.write(config)
-    backend_file.close
-    return backend_config
-
-def get_repository(output):
-    repository = output["repository_url"]["value"]["service-a"]
-    return repository
-
-def get_endpoint(output):
-    endpoint = output["service_url"]["value"]
-    logger.info("Fetched service endpoint: {}".format(endpoint))
-    return endpoint
-
-def get_elb_status(output):
-    name = output["load_balancer_name"]["value"]
-    load_balancer = elb.describe_load_balancers(Names=[name])["LoadBalancers"]
-    status = [ v["State"]["Code"] for v in load_balancer][0]
-    logger.info("Fetched Load Balancer Status: {}".format(status))
-    return status
 
 def build_docker(directory, repository, tag, port=8080):
     logger.info("Fetching authentication token for {}".format(repository))
@@ -137,6 +113,25 @@ def build_docker(directory, repository, tag, port=8080):
     push = docker.push(repository=repository + ":" + tag)
 
 
+def get_repository(output):
+    repository = output["repository_url"]["value"]["service-a"]
+    return repository
+
+
+def get_endpoint(output):
+    endpoint = output["service_url"]["value"]
+    logger.info("Fetched service endpoint: {}".format(endpoint))
+    return endpoint
+
+
+def get_elb_status(output):
+    name = output["load_balancer_name"]["value"]
+    load_balancer = elb.describe_load_balancers(Names=[name])["LoadBalancers"]
+    status = [ v["State"]["Code"] for v in load_balancer][0]
+    logger.info("Fetched Load Balancer Status: {}".format(status))
+    return status
+
+
 def test_endpoint(endpoint):
     url = "http://" + endpoint
     logger.info("Testing: {}".format(url))
@@ -157,23 +152,22 @@ def test_endpoint(endpoint):
     return test_result
 
 
-# ############# handler #############################################
+############## handler #############################################
 for m in MODULES:
     if ACTION == "apply":
-        if MODULES.index(m) > 0:
-            output = manage_module(m, ACTION)
-            if m == "core/ecr":
-                repository = get_repository(output)
-                build_docker(SERVICE_DIR, repository, "v1.0")
-            elif m == "services/service-a":
-                endpoint = get_endpoint(output)
-                while get_elb_status(output) != "active":
-                    time.sleep(30)
-                test_endpoint(endpoint)
+        output = manage_module(m, ACTION)
+        if m == "core/ecr":
+            repository = get_repository(output)
+            build_docker(SERVICE_DIR, repository, "v1.0")
+        elif m == "services/service-a":
+            endpoint = get_endpoint(output)
+            while get_elb_status(output) != "active":
+                time.sleep(30)
+            test_endpoint(endpoint)
     elif ACTION == "destroy":
-        modules = MODULES.reverse()
-        for m in modules:
-            if modules.index(m) < len(modules):
-                manage_module(m, "destroy")
+        if SAVE_BACKEND:
+            MODULES.remove("backend-state")
+        for m in reversed(MODULES):
+            manage_module(m, "destroy")
 
 
