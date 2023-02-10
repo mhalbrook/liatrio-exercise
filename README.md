@@ -47,9 +47,9 @@ Additionally, the AWS CLI must be configured with valid credentials for the AWS 
 ## Deploying
 To deploy the application, navigate to the root of the repository from Terminal, then run the following command:
 
-        pip3 install -r requirements.txt && python3 build.py --action apply
+    pip3 install -r requirements.txt && python3 build.py --action apply
 
 ## Cleanup
 To decommission the application, navigate to the root of the repository from Terminal, then run the following command: 
 
-        python3 build.py --action destroy
+    python3 build.py --action destroy
