@@ -20,7 +20,7 @@ provider "aws" {
   alias                    = "account"
   region                   = local.region
   shared_credentials_files = ["~/.aws/credentials"]
-  profile                  = "halbromr"
+  profile                  = "default"
 }
 
 provider "kubernetes" {

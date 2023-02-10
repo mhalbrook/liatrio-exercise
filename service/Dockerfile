@@ -1,5 +1,3 @@
-ARG BASE_IMAGE_VERSION
-
 FROM --platform=linux/amd64 python:3.10-slim
 
 ARG PORT

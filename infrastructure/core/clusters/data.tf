@@ -9,6 +9,6 @@ data "terraform_remote_state" "vpc" {
     bucket  = "us-east-1-interview-mitch-halbrook-terraform-state-backend"
     region  = "us-east-1"
     key     = "core/networking/vpc/terraform.tfstate"
-    profile = "halbromr"
+    profile = "default"
   }
 }
