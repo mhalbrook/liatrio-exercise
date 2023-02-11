@@ -169,5 +169,7 @@ for m in MODULES:
             MODULES.remove("backend-state")
         for m in reversed(MODULES):
             manage_module(m, "destroy")
+            if m == "core/clusters":
+                time.sleep(60)
 
 
