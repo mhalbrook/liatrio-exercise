@@ -23,7 +23,6 @@ LOG_LEVEL = "INFO"
 REPO_DIR=os.path.dirname(os.path.realpath("README.MD"))
 INFRA_DIR=REPO_DIR + "/infrastructure/"
 SERVICE_DIR=REPO_DIR + "/service/"
-MODULES = ["backend-state", "core/networking/vpc", "core/ecr", "core/clusters", "services/service-a"]
 WORKSPACE = "demo-us-east-1"
 PROFILE="default"
 
@@ -41,10 +40,10 @@ docker = docker.APIClient(base_url='unix://var/run/docker.sock')
 
 # parse options
 parser.add_option("-a", "--action", dest="action", type="str", default="apply")
-parser.add_option("--save-backend", action="store_true", dest="save_backend", default=True)
+parser.add_option("--skip-backend", action="store_true", dest="skip_backend", default=False)
 (options, args) = parser.parse_args()
 ACTION=options.action
-SAVE_BACKEND=options.save_backend
+SKIP_BACKEND=options.skip_backend
 
 # ############# functions #############################################
 
@@ -108,7 +107,7 @@ def build_docker(directory, repository, tag, port=8080):
         }
     )]
     logger.info("Authenticating to: {}".format(repository))
-    docker.login(registry=registry, username=username, password=password)
+    login = docker.login(registry=registry, username=username, password=password)
     logger.info("Pushing image: {}".format(repository + ":" + tag))
     push = docker.push(repository=repository + ":" + tag)
 
@@ -143,6 +142,7 @@ def test_endpoint(endpoint):
         if "message" in payload_keys and "timestamp" in payload_keys:
             logger.info("{} returned 'message' and 'timestamp'. Test passed.")
             test_result = True
+            return test_result
         else: 
             logger.info("{} did not return 'message' and 'timestamp'. Test failed.")
             test_result = False
@@ -153,7 +153,10 @@ def test_endpoint(endpoint):
 
 
 ############## handler #############################################
-for m in MODULES:
+modules=["backend-state", "core/networking/vpc", "core/ecr", "core/clusters", "services/service-a"]
+if SKIP_BACKEND:
+    modules.remove("backend-state")
+for m in modules:
     if ACTION == "apply":
         output = manage_module(m, ACTION)
         if m == "core/ecr":
@@ -163,13 +166,12 @@ for m in MODULES:
             endpoint = get_endpoint(output)
             while get_elb_status(output) != "active":
                 time.sleep(30)
-            test_endpoint(endpoint)
+            while not test_endpoint(endpoint):
+                time.sleep(15)
     elif ACTION == "destroy":
-        if SAVE_BACKEND:
-            MODULES.remove("backend-state")
-        for m in reversed(MODULES):
-            manage_module(m, "destroy")
-            if m == "core/clusters":
+        for m in reversed(modules):
+            if m == "core/networking/vpc":
                 time.sleep(60)
+            manage_module(m, "destroy")
 
 
