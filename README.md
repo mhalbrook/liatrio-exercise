@@ -45,11 +45,15 @@ The following tools must be installed in order to deploy the application
 Additionally, the AWS CLI must be configured with valid credentials for the AWS Account in which the service is being deployed. The credentials must be stored under the 'default' profile of the ~/.aws/credentials file.
 
 ## Deploying
-To deploy the application, navigate to the root of the repository from Terminal, then run the following command:
+To deploy the application, for the first time, navigate to the root of the repository from Terminal, then run the following command:
 
     pip3 install -r requirements.txt && python3 build.py --action apply
 
 Note that some resources may take > 20 minutes to provision. During this time, Python may not present any logs and may appear to 'hang'. This is normal and expected behavior.
+
+When deploying subsequent times, the requirements no longer require installation, therefore you may run the following command:
+
+    python3 build.py --action apply
 
 ## Cleanup
 To decommission the application, navigate to the root of the repository from Terminal, then run the following command: 
@@ -60,4 +64,4 @@ Note that the Terraform Backend Resources includes an S3 Bucket with a specific 
 
 To decommission the application, but save the Terraform Backend Resources, navigate to the root of the repository from Terminal, then run the following command: 
 
-    python3 build.py --action destroy --save-backend
+    python3 build.py --action destroy --skip-backend
