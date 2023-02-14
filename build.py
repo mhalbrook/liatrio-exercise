@@ -1,6 +1,5 @@
 import logging
 import os
-from dotenv import load_dotenv
 from python_terraform import *
 import docker
 import botocore
@@ -11,14 +10,6 @@ from optparse import OptionParser
 import time
 
 ############# initialization #############################################
-load_dotenv()
-
-def validate_variable(constant):
-    if constant is None: 
-        raise TypeError ("required environment variable is not set.")
-    else:
-        return constant
-
 LOG_LEVEL = "INFO"
 REPO_DIR=os.path.dirname(os.path.realpath("README.MD"))
 INFRA_DIR=REPO_DIR + "/infrastructure/"
@@ -37,6 +28,7 @@ ecr = boto3.client("ecr", config=boto_cfg)
 elb = boto3.client("elbv2", config=boto_cfg)
 tf = Terraform()
 docker = docker.APIClient(base_url='unix://var/run/docker.sock')
+#docker = docker.Client(base_url='unix://var/run/docker.sock')
 
 # parse options
 parser.add_option("-a", "--action", dest="action", type="str", default="apply")

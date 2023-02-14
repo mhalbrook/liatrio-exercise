@@ -290,7 +290,7 @@ resource "kubernetes_service_account" "elb_controller" {
       "app.kubernetes.io/managed-by" = "Helm"
       "app.kubernetes.io/instance"   = "aws-load-balancer-controller"
       "app.kubernetes.io/version"    = "v2.4.6"
-      "helm.sh/chart"                = "aws-load-balancer-controller-1.4.7"
+      "helm.sh/chart"                = "aws-load-balancer-controller-2.4.6"
     }
     annotations = {
       "eks.amazonaws.com/role-arn"     = aws_iam_role.elb_controller.arn
@@ -315,7 +315,7 @@ resource "kubernetes_cluster_role" "elb_controller" {
       "app.kubernetes.io/managed-by" = "Helm"
       "app.kubernetes.io/instance"   = "aws-load-balancer-controller"
       "app.kubernetes.io/version"    = "v2.4.6"
-      "helm.sh/chart"                = "aws-load-balancer-controller-1.4.7"
+      "helm.sh/chart"                = "aws-load-balancer-controller-2.4.6"
     }
     annotations = {
       "eks.amazonaws.com/role-arn"     = "aws_iam_role.elb_controller.arn"

@@ -45,6 +45,8 @@ The following tools must be installed in order to deploy the application
 Additionally, the AWS CLI must be configured with valid credentials for the AWS Account in which the service is being deployed. The credentials must be stored under the 'default' profile of the ~/.aws/credentials file.
 
 ## Deploying
+Before deploying, ensure that docker is running locally.
+
 To deploy the application, for the first time, navigate to the root of the repository from Terminal, then run the following command:
 
     pip3 install -r requirements.txt && python3 build.py --action apply
