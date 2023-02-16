@@ -28,19 +28,3 @@ module "services" {
     aws.account = aws.account
   }
 }
-
-/* module "tools" {
-  source                     = "../../../.modules/vpc"
-  vpc_name                   = format("%s-tools", var.project)
-  environment                = local.environment
-  vpc_cidr                   = var.vpc_cidr["tools"]
-  availability_zone_count    = 2
-  subnet_mask_slash_notation = 24
-  application_ports          = []
-  enable_flow_logs           = false
-  enabled_vpc_endpoints      = []
-
-  providers = {
-    aws.account = aws.account
-  }
-} */
