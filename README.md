@@ -52,7 +52,7 @@ To deploy the application, for the first time, navigate to the root of the repos
 
     pip3 install -r requirements.txt && python3 build.py --action apply
 
-Note that some resources may take > 20 minutes to provision. During this time, Python may not present any logs and may appear to 'hang'. This is normal and expected behavior.
+Note that some resources may take > 30 minutes to provision. During this time, Python may not present any logs and may appear to 'hang'. This is normal and expected behavior.
 
 When deploying subsequent times, the requirements no longer require installation, therefore you may run the following command:
 
