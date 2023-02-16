@@ -132,14 +132,14 @@ def test_endpoint(endpoint):
         response_dict = response.json()
         payload_keys = response_dict.keys()
         if "message" in payload_keys and "timestamp" in payload_keys:
-            logger.info("{} returned 'message' and 'timestamp'. Test passed.")
+            logger.info("{} returned 'message' and 'timestamp'. Test passed.".format(url))
             test_result = True
             return test_result
         else: 
-            logger.info("{} did not return 'message' and 'timestamp'. Test failed.")
+            logger.info("{} did not return 'message' and 'timestamp'. Test failed.".format(url))
             test_result = False
     else: 
-        logger.info("{} did not return 200'. Test failed.")
+        logger.info("{} did not return 200'. Test failed.".format(url))
         test_result = False
     return test_result
 
