@@ -35,6 +35,7 @@ The following resources are provisioned:
 
 ## Requirements
 The following tools must be installed in order to deploy the application
+
     terraform >=v1.3.6
     python >=v3.10.0
     aws-cli >=v2.9
