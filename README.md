@@ -3,7 +3,7 @@
 ## Overview
 The liatrio-exercise provisions resources to host a simple Python service on AWS EKS Fargate. Once deployed, the service can be reached via the provided URL and will return a static message and the current timestamp.
 
-### resources
+### Resources
 The following resources are provisioned:
 - Terraform Remote Backend Resources
     - S3 Bucket
